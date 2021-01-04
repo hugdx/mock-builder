@@ -3,7 +3,6 @@
 namespace HungDX\MockQueryBuilder\Mock;
 
 use Illuminate\Support\Arr;
-use Mockery\MockInterface;
 use Mockery;
 
 class MockQueryBuilder implements MockQueryBuilderInterface
@@ -11,7 +10,7 @@ class MockQueryBuilder implements MockQueryBuilderInterface
     /** @var array */
     private $logs = [];
 
-    /** @var MockInterface|mixed */
+    /** @var Mockery\MockInterface|mixed */
     private $mock;
 
     /** @var array */
@@ -19,9 +18,9 @@ class MockQueryBuilder implements MockQueryBuilderInterface
 
     /**
      * MockQueryBuilder constructor.
-     * @param MockInterface $mock
+     * @param Mockery\MockInterface $mock
      */
-    public function __construct(MockInterface $mock)
+    public function __construct(Mockery\MockInterface $mock)
     {
         $this->mock = $mock;
         $this->init();
@@ -48,7 +47,7 @@ class MockQueryBuilder implements MockQueryBuilderInterface
      * Mock a method for current mock instance
      *
      * @param string $methodName
-     * @return MockInterface|MockQueryBuilderInterface|mixed
+     * @return Mockery\ExpectationInterface|Mockery\Expectation|Mockery\HigherOrderMessage
      */
     public function __mockMethod(string $methodName)
     {
@@ -118,9 +117,9 @@ class MockQueryBuilder implements MockQueryBuilderInterface
     /**
      * Get current mock instance
      *
-     * @return MockInterface
+     * @return Mockery\MockInterface
      */
-    public function getMock(): MockInterface
+    public function getMock(): Mockery\MockInterface
     {
         return $this->mock;
     }
@@ -195,7 +194,7 @@ class MockQueryBuilder implements MockQueryBuilderInterface
      * Create mock of $className
      *
      * @param string $className
-     * @return MockInterface|MockQueryBuilderInterface
+     * @return Mockery\MockInterface|MockQueryBuilderInterface
      */
     public static function create(string $className)
     {

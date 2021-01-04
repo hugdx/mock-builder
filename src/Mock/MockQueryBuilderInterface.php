@@ -17,7 +17,7 @@ interface MockQueryBuilderInterface
 
     /**
      * @param string $methodName
-     * @return MockQueryBuilderInterface|\Mockery\MockInterface
+     * @return \Mockery\ExpectationInterface|\Mockery\Expectation|\Mockery\HigherOrderMessage
      */
     public function __mockMethod(string $methodName);
 }
