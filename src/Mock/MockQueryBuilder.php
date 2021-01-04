@@ -47,10 +47,15 @@ class MockQueryBuilder implements MockQueryBuilderInterface
      * Mock a method for current mock instance
      *
      * @param string $methodName
+     * @param bool $capture
      * @return Mockery\ExpectationInterface|Mockery\Expectation|Mockery\HigherOrderMessage
      */
-    public function __mockMethod(string $methodName)
+    public function __mockMethod(string $methodName, bool $capture = true)
     {
+        if (!$capture) {
+            return $this->mock->shouldReceive($methodName);
+        }
+
         $that = $this;
         return $this->mock->shouldReceive($methodName)
             ->withArgs(function (...$parameters) use ($that, $methodName) {
@@ -211,8 +216,8 @@ class MockQueryBuilder implements MockQueryBuilderInterface
             return $builder->getMock();
         });
 
-        $mock->shouldReceive('__mockMethod')->andReturnUsing(function (string $methodName) use ($builder) {
-            return $builder->__mockMethod($methodName);
+        $mock->shouldReceive('__mockMethod')->andReturnUsing(function (string $methodName, bool $capture = true) use ($builder) {
+            return $builder->__mockMethod($methodName, $capture);
         });
 
         return $mock;
@@ -220,7 +225,7 @@ class MockQueryBuilder implements MockQueryBuilderInterface
 
     public function init()
     {
-        $this->mock->shouldReceive('query')->withNoArgs()->andReturnSelf();
+        $this->__mockMethod('query', false)->withNoArgs()->andReturnSelf();
         $this->__mockMethod('where')->andReturnSelf();
         $this->__mockMethod('orWhere')->andReturnSelf();
         $this->__mockMethod('orWhereHas')->andReturnSelf();
