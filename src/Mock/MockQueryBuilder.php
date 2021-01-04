@@ -212,8 +212,7 @@ class MockQueryBuilder implements MockQueryBuilderInterface
         });
 
         $mock->shouldReceive('__mockMethod')->andReturnUsing(function (string $methodName) use ($builder) {
-            $builder->__mockMethod($methodName);
-            return $builder->getMock();
+            return $builder->__mockMethod($methodName);
         });
 
         return $mock;
