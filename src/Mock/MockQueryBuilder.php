@@ -31,7 +31,7 @@ class MockQueryBuilder implements MockQueryBuilderInterface
      * Get logs
      * @return array
      */
-    public function getLogs(): array
+    public function __getLogs(): array
     {
         return $this->makeLogsToReadable($this->logs);
     }
@@ -39,7 +39,7 @@ class MockQueryBuilder implements MockQueryBuilderInterface
     /**
      * Reset logs
      */
-    public function resetLogs()
+    public function __resetLogs()
     {
         $this->logs = [];
     }
@@ -50,7 +50,7 @@ class MockQueryBuilder implements MockQueryBuilderInterface
      * @param string $methodName
      * @return MockInterface|MockQueryBuilderInterface|mixed
      */
-    public function mockMethod(string $methodName)
+    public function __mockMethod(string $methodName)
     {
         $that = $this;
         return $this->mock->shouldReceive($methodName)
@@ -203,34 +203,35 @@ class MockQueryBuilder implements MockQueryBuilderInterface
 
         $builder = new static($mock);
 
-        $mock->getLogs = function () use ($builder) {
-            return $builder->getLogs();
-        };
+        $mock->shouldReceive('__getLogs')->andReturnUsing(function () use ($builder) {
+            return $builder->__getLogs();
+        });
 
-        $mock->resetLogs = function () use ($builder) {
-            $builder->resetLogs();
+        $mock->shouldReceive('__resetLogs')->andReturnUsing(function () use ($builder) {
+            $builder->__resetLogs();
             return $builder->getMock();
-        };
+        });
 
-        $mock->mockMethod = function (string $methodName) use ($builder) {
-            $builder->mockMethod($methodName);
+        $mock->shouldReceive('__mockMethod')->andReturnUsing(function (string $methodName) use ($builder) {
+            $builder->__mockMethod($methodName);
             return $builder->getMock();
-        };
+        });
 
         return $mock;
     }
 
     public function init()
     {
-        $this->mockMethod('where')->andReturnSelf();
-        $this->mockMethod('orWhere')->andReturnSelf();
-        $this->mockMethod('orWhereHas')->andReturnSelf();
-        $this->mockMethod('whereHas')->andReturnSelf();
-        $this->mockMethod('whereDate')->andReturnSelf();
-        $this->mockMethod('whereIn')->andReturnSelf();
-        $this->mockMethod('orderBy')->andReturnSelf();
-        $this->mockMethod('skip')->andReturnSelf();
-        $this->mockMethod('limit')->andReturnSelf();
-        $this->mockMethod('with')->andReturnSelf();
+        $this->mock->shouldReceive('query')->withNoArgs()->andReturnSelf();
+        $this->__mockMethod('where')->andReturnSelf();
+        $this->__mockMethod('orWhere')->andReturnSelf();
+        $this->__mockMethod('orWhereHas')->andReturnSelf();
+        $this->__mockMethod('whereHas')->andReturnSelf();
+        $this->__mockMethod('whereDate')->andReturnSelf();
+        $this->__mockMethod('whereIn')->andReturnSelf();
+        $this->__mockMethod('orderBy')->andReturnSelf();
+        $this->__mockMethod('skip')->andReturnSelf();
+        $this->__mockMethod('limit')->andReturnSelf();
+        $this->__mockMethod('with')->andReturnSelf();
     }
 }
