@@ -1,7 +1,7 @@
 <?php
 
 
-namespace HungDX\MockQueryBuilder\Mock;
+namespace HungDX\MockBuilder\Mock;
 
 interface MockBuilderInterface
 {

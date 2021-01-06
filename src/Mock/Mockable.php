@@ -1,6 +1,6 @@
 <?php
 
-namespace HungDX\MockQueryBuilder\Mock;
+namespace HungDX\MockBuilder\Mock;
 
 trait Mockable
 {

@@ -27,7 +27,7 @@
     },
     "autoload": {
         "psr-4": {
-            "HungDX\\MockQueryBuilder\\": "src/"
+            "HungDX\\MockBuilder\\": "src/"
         }
     },
     "scripts": {
