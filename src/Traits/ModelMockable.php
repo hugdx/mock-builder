@@ -18,7 +18,9 @@ trait ModelMockable
     {
         if (!isset(self::$mocks[static::class])) {
             self::$mocks[static::class] = MockBuilder::create(static::class);
-            self::$mocks[static::class]->initMockModelMethods();
+            self::$mocks[static::class]->__getMockBuilder()->mockClassMethods(\Illuminate\Database\Eloquent\Model::class);
+            self::$mocks[static::class]->__getMockBuilder()->mockClassMethods(\Illuminate\Database\Eloquent\Builder::class);
+            self::$mocks[static::class]->__getMockBuilder()->mockClassMethods(\Illuminate\Database\Query\Builder::class);
         }
         return self::$mocks[static::class];
     }

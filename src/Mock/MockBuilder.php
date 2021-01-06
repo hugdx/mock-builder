@@ -110,7 +110,7 @@ class MockBuilder implements MockBuilderInterface
      * @param array $parameters
      * @param string $methodName
      */
-    public function onMethodCalled(array $parameters, string $methodName)
+    private function onMethodCalled(array $parameters, string $methodName)
     {
         if ($this->isInIgnoreList($methodName)) {
             return;
@@ -150,7 +150,7 @@ class MockBuilder implements MockBuilderInterface
      * @param string $methodName
      * @return string
      */
-    public function generateLogPath(string $methodName): string
+    private function generateLogPath(string $methodName): string
     {
         $treePathLength = count($this->treePath);
         $path           = $treePathLength > 0 ? $this->treePath[$treePathLength - 1] . '.' : '';
@@ -163,7 +163,7 @@ class MockBuilder implements MockBuilderInterface
      *
      * @param string $logPath
      */
-    public function addToLogPathStack(string $logPath)
+    private function addToLogPathStack(string $logPath)
     {
         $this->treePath[] = $logPath;
     }
@@ -173,7 +173,7 @@ class MockBuilder implements MockBuilderInterface
      *
      * @return mixed
      */
-    public function removeFromLogPathStack()
+    private function removeFromLogPathStack()
     {
         return array_pop($this->treePath);
     }
@@ -194,7 +194,7 @@ class MockBuilder implements MockBuilderInterface
      * @param string $logPath
      * @param object|array $parameters
      */
-    public function setLog(string $logPath, $parameters)
+    private function setLog(string $logPath, $parameters)
     {
         $current = Arr::get($this->logs, $logPath, []);
         $current = is_array($current) ? $current : [$current];
@@ -208,7 +208,7 @@ class MockBuilder implements MockBuilderInterface
      * @param string $logPath
      * @return array|\ArrayAccess|mixed
      */
-    public function getLog(string $logPath)
+    private function getLog(string $logPath)
     {
         return Arr::get($this->logs, $logPath, []);
     }
@@ -219,7 +219,7 @@ class MockBuilder implements MockBuilderInterface
      * @param array $parameters
      * @return bool
      */
-    protected function hasCallback(array $parameters): bool
+    private function hasCallback(array $parameters): bool
     {
         foreach ($parameters as $parameter) {
             if (is_callable($parameter)) {
@@ -360,9 +360,38 @@ class MockBuilder implements MockBuilderInterface
         $mock->shouldReceive('__mockMethod')->andReturnUsing(function (string $methodName, $flag = self::CAPTURE_LOG) use ($builder) {
             return $builder->__mockMethod($methodName, $flag);
         });
+
+        $mock->shouldReceive('__getMockMethod')->andReturnUsing(function (string $methodName) use ($builder) {
+            return $builder->__getMockMethod($methodName);
+        });
     }
 
-    public function initMockModelMethods()
+    public function setIgnoreLogs(array $ignoreList): self
+    {
+        $this->ignoreList = $ignoreList;
+
+        return $this;
+    }
+
+    public function addIgnoreLog(...$ignores): self
+    {
+        foreach ($ignores as $ignore) {
+            if (!is_array($ignore)) {
+                $ignore = [$ignore];
+            }
+            $this->ignoreList = array_merge($this->ignoreList, $ignore);
+        }
+        $this->ignoreList = array_unique($this->ignoreList);
+
+        return $this;
+    }
+
+    public function getIgnoreLogs(): array
+    {
+        return $this->ignoreList;
+    }
+
+    public function mockClassMethods(string $className): self
     {
         $this->ignoreList = array_merge($this->ignoreList, [
             'query',
@@ -375,18 +404,37 @@ class MockBuilder implements MockBuilderInterface
             'with',
         ]);
 
-        if (class_exists(\Illuminate\Database\Eloquent\Builder::class)) {
-            $class   = new ReflectionClass(\Illuminate\Database\Eloquent\Builder::class);
-            $methods = $class->getMethods(
-                ReflectionMethod::IS_STATIC |
-                ReflectionMethod::IS_PUBLIC |
-                ReflectionMethod::IS_PROTECTED |
-                ReflectionMethod::IS_FINAL |
-                ReflectionMethod::IS_ABSTRACT
-            );
+        $ignoreMethods = [
+            // The methods of Traits
+            'fake', 'restoreOriginal', 'getMock', 'newQuery', 'query',
+
+            // magic methods
+            '__callStatic', '__call', '__isset', '__unset', '__construct',
+        ];
+
+        if (class_exists($className)) {
+            $this->mock->shouldAllowMockingProtectedMethods();
+            $class   = new ReflectionClass($className);
+            $methods = $class->getMethods();
+
             foreach ($methods as $method) {
+                $methodName = $method->getName();
+
+                if (in_array($methodName, $ignoreMethods)) {
+                    continue;
+                }
+
+                // If the method have been mocked, ignore that
+                if ($this->__getMockMethod($methodName)) {
+                    continue;
+                }
+
+                #echo $methodName . PHP_EOL;
+
                 $this->__mockMethod($method->getName())->andReturnSelf();
             }
         }
+
+        return $this;
     }
 }
