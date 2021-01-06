@@ -1,9 +1,9 @@
 {
-    "name": "hungdx/mock-query-builder",
+    "name": "hungdx/mock-builder",
     "version": "1.0.0",
     "license": "MIT",
-    "description": "The Mock query builder for Laravel Framework. Use for unit test",
-    "keywords": ["Mock Query Builder", "Mock Eloquent Query Builder", "Laravel Test", "laravel"],
+    "description": "The Mock builder for Laravel Framework. Use for unit test",
+    "keywords": ["Mock Builder", "Mock Eloquent Query Builder", "Laravel Test", "laravel"],
     "homepage": "https://github.com/hugdx/mock-query-builder",
     "support": {
         "issues": "https://github.com/hugdx/mock-query-builder/issues",
