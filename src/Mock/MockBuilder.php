@@ -4,6 +4,8 @@ namespace HungDX\MockBuilder\Mock;
 
 use Illuminate\Support\Arr;
 use Mockery;
+use ReflectionClass;
+use ReflectionMethod;
 
 class MockBuilder implements MockBuilderInterface
 {
@@ -34,7 +36,6 @@ class MockBuilder implements MockBuilderInterface
     public function __construct(Mockery\MockInterface $mock)
     {
         $this->mock = $mock;
-        $this->init();
     }
 
     /**
@@ -93,6 +94,14 @@ class MockBuilder implements MockBuilderInterface
     public function __getMockMethod(string $methodName): array
     {
         return $this->mockMethods[$methodName] ?? [];
+    }
+
+    /**
+     * @return MockBuilder
+     */
+    public function __getMockBuilder(): MockBuilder
+    {
+        return $this;
     }
 
     /**
@@ -335,6 +344,10 @@ class MockBuilder implements MockBuilderInterface
     {
         $builder = new static($mock);
 
+        $mock->shouldReceive('__getMockBuilder')->andReturnUsing(function () use ($builder) {
+            return $builder;
+        });
+
         $mock->shouldReceive('__getLogs')->andReturnUsing(function () use ($builder) {
             return $builder->__getLogs();
         });
@@ -349,27 +362,31 @@ class MockBuilder implements MockBuilderInterface
         });
     }
 
-    public function init()
+    public function initMockModelMethods()
     {
-        $this->__mockMethod('query', self::IGNORE_LOG)->withNoArgs()->andReturnSelf();
-        $this->__mockMethod('select')->andReturnSelf();
-        $this->__mockMethod('from')->andReturnSelf();
-        $this->__mockMethod('leftJoin')->andReturnSelf();
-        $this->__mockMethod('where')->andReturnSelf();
-        $this->__mockMethod('orWhere')->andReturnSelf();
-        $this->__mockMethod('orWhereHas')->andReturnSelf();
-        $this->__mockMethod('whereHas')->andReturnSelf();
-        $this->__mockMethod('whereDate')->andReturnSelf();
-        $this->__mockMethod('whereIn')->andReturnSelf();
-        $this->__mockMethod('orWhereNull')->andReturnSelf();
-        $this->__mockMethod('whereNotNull')->andReturnSelf();
-        $this->__mockMethod('orderBy')->andReturnSelf();
-        $this->__mockMethod('orderByRaw')->andReturnSelf();
-        $this->__mockMethod('orderByDesc')->andReturnSelf();
-        $this->__mockMethod('skip')->andReturnSelf();
-        $this->__mockMethod('limit')->andReturnSelf();
-        $this->__mockMethod('with', self::IGNORE_LOG_IF_EMPTY)->andReturnSelf();
-        $this->__mockMethod('setModel', self::IGNORE_LOG)->andReturnSelf();
-        $this->__mockMethod('withCount', self::IGNORE_LOG)->andReturnSelf();
+        $this->ignoreList = array_merge($this->ignoreList, [
+            'query',
+            'newQuery',
+            'setModel',
+            'withCount',
+        ]);
+
+        $this->ignoreOnEmpty = array_merge($this->ignoreOnEmpty, [
+            'with',
+        ]);
+
+        if (class_exists(\Illuminate\Database\Eloquent\Builder::class)) {
+            $class   = new ReflectionClass(\Illuminate\Database\Eloquent\Builder::class);
+            $methods = $class->getMethods(
+                ReflectionMethod::IS_STATIC |
+                ReflectionMethod::IS_PUBLIC |
+                ReflectionMethod::IS_PROTECTED |
+                ReflectionMethod::IS_FINAL |
+                ReflectionMethod::IS_ABSTRACT
+            );
+            foreach ($methods as $method) {
+                $this->__mockMethod($method->getName())->andReturnSelf();
+            }
+        }
     }
 }

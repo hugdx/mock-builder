@@ -29,4 +29,9 @@ interface MockBuilderInterface
      * @return \Mockery\ExpectationInterface[]|\Mockery\Expectation[]|\Mockery\HigherOrderMessage[]
      */
     public function __getMockMethod(string $methodName): array;
+
+    /**
+     * @return MockBuilder
+     */
+    public function __getMockBuilder(): MockBuilder;
 }

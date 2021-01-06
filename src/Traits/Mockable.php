@@ -1,11 +1,14 @@
 <?php
 
-namespace HungDX\MockBuilder\Mock;
+namespace HungDX\MockBuilder\Traits;
+
+use HungDX\MockBuilder\Mock\MockBuilder;
+use HungDX\MockBuilder\Mock\MockBuilderInterface;
 
 trait Mockable
 {
     /** @var MockBuilderInterface[]|\Mockery\MockInterface[]|null[] */
-    private static $mocks = [];
+    public static $mocks = [];
 
     /**
      * @return MockBuilderInterface|\Mockery\MockInterface
@@ -35,9 +38,13 @@ trait Mockable
 
     public static function __callStatic($method, $params)
     {
+        if (in_array($method, ['getMock'])) {
+            return static::getMock();
+        }
+
         $mock = static::getMock();
         if ($mock) {
-            return call_user_func_array([$method, $mock], $params);
+            return call_user_func_array([$mock, $method], $params);
         }
         return parent::__callStatic($method, $params);
     }
@@ -46,25 +53,9 @@ trait Mockable
     {
         $mock = static::getMock();
         if ($mock) {
-            return call_user_func_array([$method, $mock], $params);
+            return call_user_func_array([$mock, $method], $params);
         }
         return parent::__call($method, $params);
-    }
-
-    public function __get($key)
-    {
-        $mock = static::getMock();
-        return $mock ? $mock->{$key} : parent::__get($key);
-    }
-
-    public function __set($name, $value)
-    {
-        $mock = static::getMock();
-        if ($mock) {
-            $mock->{$name} = $value;
-        } else {
-            parent::__set($name, $value);
-        }
     }
 
     public function __isset($name)
