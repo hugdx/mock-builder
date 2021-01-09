@@ -3,7 +3,6 @@
 
 namespace HungDX\MockBuilder\Contracts;
 
-
 interface LoggerInterface
 {
     /**

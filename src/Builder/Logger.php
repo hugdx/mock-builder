@@ -7,7 +7,6 @@ use Illuminate\Support\Arr;
 
 class Logger implements LoggerInterface
 {
-
     /** @var array */
     private $logs = [];
 

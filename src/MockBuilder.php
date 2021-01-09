@@ -105,9 +105,19 @@ class MockBuilder implements MockBuilderInterface
             return;
         }
 
-        // file_put_contents(__DIR__ . '/dynamic_' . str_replace('\\', '_', $def->getClassName()) . '.php', $def->getCode());
+        # file_put_contents(__DIR__ . '/dynamic_' . str_replace('\\', '_', $def->getClassName()) . '.php', $def->getCode());
 
         Mockery::getLoader()->load($def);
+    }
+
+    public static function createClassName(string $srcClassName): string
+    {
+        $count        = 0;
+        $srcClassName = str_replace('\\', '_', trim($srcClassName, '\\'));
+        do {
+            $className = '\\MockBuilder_' . (++$count) . '_' . $srcClassName;
+        } while (class_exists($className));
+        return $className;
     }
 
     /**
@@ -249,5 +259,10 @@ class MockBuilder implements MockBuilderInterface
             return end($this->mockMethods[$methodName]);
         }
         return null;
+    }
+
+    public static function isTestingMode(): bool
+    {
+        return defined('PHPUNIT_COMPOSER_INSTALL');
     }
 }

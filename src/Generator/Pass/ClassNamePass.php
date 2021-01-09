@@ -5,7 +5,6 @@
 
 namespace HungDX\MockBuilder\Generator\Pass;
 
-
 use Mockery\Generator\MockConfiguration;
 use Mockery\Generator\StringManipulation\Pass\Pass;
 

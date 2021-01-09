@@ -7,14 +7,13 @@ use HungDX\MockBuilder\MockBuilder;
 use Mockery\Generator\MockConfigurationBuilder;
 
 $className = '\HungDX\MockBuilder\Integration\ModelMockable';
-
 // Class defined
 if (class_exists($className)) {
     return;
 }
 
 // Not running with phpunit
-if (!defined('PHPUNIT_COMPOSER_INSTALL')) {
+if (!MockBuilder::isTestingMode()) {
     return require_once __DIR__ . '/ModelMockable.d.php';
 }
 

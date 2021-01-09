@@ -4,7 +4,9 @@
 namespace HungDX\MockBuilder\Builder;
 
 use Exception;
+use HungDX\MockBuilder\Generator\Mockable;
 use HungDX\MockBuilder\MockBuilder;
+use ReflectionClass;
 use ReflectionFunction;
 
 class Method
@@ -69,22 +71,31 @@ class Method
 
     private function doMethodCallback(callable $callback)
     {
-        $mockForCallback = $this->mock;
+        $mockForCallback = $this->mock->getMock();
         try {
             $parameter = (new ReflectionFunction($callback))->getParameters()[0] ?? false;
             if ($parameter) {
                 if ($parameter->getClass()) {
-                    $className = $parameter->getClass()->getName();
-                    $className = \HungDX\MockBuilder\Generator\Generator::createSubClassOf($className);
+                    $srcClass = $parameter->getClass()->getName();
 
-                    $mockForCallback = new $className;
-                    $mockForCallback->_mockBuilder_setMock($this->mock);
+                    // Create class extends of parameter
+                    $targetClassName = MockBuilder::createClassName($srcClass);
+                    MockBuilder::createClass($targetClassName, $srcClass);
+
+                    // Create instance
+                    call_user_func($targetClassName . '::setMock', $this->mock->getMock());
+                    /** @var Mockable $mockForCallback */
+                    $mockForCallback = (new ReflectionClass($targetClassName))->newInstanceWithoutConstructor();
+
+                    echo ' #START: $mockForCallback->setMock($this->mock->getMock()) ' . PHP_EOL;
+                    $mockForCallback->setMock($this->mock->getMock());
+                    echo ' #DONE: $mockForCallback->setMock($this->mock->getMock()) ' . PHP_EOL;
                 }
             }
         } catch (Exception $e) {
         }
 
-        call_user_func($callback, $$mockForCallback);
+        call_user_func($callback, $mockForCallback);
     }
 
     private function hasCallback(array $parameters): bool
@@ -124,5 +135,21 @@ class Method
     public function __call($name, $arguments)
     {
         return call_user_func_array([$this->methodMock, $name], $arguments);
+    }
+
+    public function __debugInfo()
+    {
+        return [
+            'methodMock' => get_class($this->methodMock) . ' Object',
+            'methodName' => $this->methodName,
+        ];
+    }
+
+    public function __toString()
+    {
+        return 'Class ' . __CLASS__ . '{' . json_encode([
+            'methodMock' => $this->methodMock,
+            'methodName' => $this->methodName,
+        ]) . '}';
     }
 }

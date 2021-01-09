@@ -5,7 +5,14 @@ namespace HungDX\MockBuilder\Generator;
 use HungDX\MockBuilder\Contracts\MockableInterface;
 use HungDX\MockBuilder\Contracts\MockBuilderInterface;
 use HungDX\MockBuilder\MockBuilder;
+use Mockery\Exception\BadMethodCallException;
 
+/**
+ * Class Mockable
+ * @package HungDX\MockBuilder\Generator
+ * @method MockBuilderInterface|\Mockery\MockInterface|null setMock(\Mockery\MockInterface $mock)
+ * @method MockBuilderInterface|\Mockery\MockInterface|null getMock
+ */
 class Mockable implements MockableInterface
 {
     /** @var MockBuilderInterface[]|\Mockery\MockInterface[]|null[] */
@@ -39,20 +46,18 @@ class Mockable implements MockableInterface
         }
     }
 
-    /**
-     * @param MockBuilderInterface|\Mockery\MockInterface $mock
-     * @throws \Exception
-     */
-    public static function setMock($mock)
+    public function __call($method, $parameters)
     {
-        if (!$mock instanceof \Mockery\MockInterface) {
-            throw new \Exception('Invalid mock');
-        }
-        self::$mocks[static::class] = $mock;
+        return $this->_mockBuilder_handleMethodCall($method, $parameters);
+    }
+
+    public static function __callStatic($method, $parameters)
+    {
+        return static::_mockBuilder_handleStaticMethodCall($method, $parameters);
     }
 
     /** @return MockBuilderInterface|\Mockery\MockInterface|null */
-    public static function getMock()
+    private static function _mockBuilder_getMock()
     {
         $class = static::class;
         do {
@@ -64,33 +69,30 @@ class Mockable implements MockableInterface
         return null;
     }
 
-    public function _mockBuilder_setMock($mock)
+    private static function _mockBuilder_handleStaticMethodCall($method, $parameters)
     {
-        $this->mock = $mock;
-    }
+        switch ($method) {
+            case 'setMock':
+                if (!isset($parameters[0]) || !$parameters[0] instanceof \Mockery\MockInterface) {
+                    throw new \BadMethodCallException('The parameter should be instance of \Mockery\MockInterface');
+                }
+                self::$mocks[static::class] = $parameters[0];
+                return $parameters[0];
+            case 'getMock':
+                return static::_mockBuilder_getMock();
+        }
 
-    public function __call($method, $parameters)
-    {
-        return $this->_mockBuilder_handleMethodCall($method, $parameters);
-    }
-
-    public static function __callStatic($method, $parameters)
-    {
-        return static::_mockBuilder_handleStaticMethodCall($method, $parameters);
-    }
-
-    public static function _mockBuilder_handleStaticMethodCall($method, $parameters)
-    {
-        $mock = static::getMock();
+        $mock = static::_mockBuilder_getMock();
         if ($mock) {
             if (!$mock->__getMockBuilder()->__getMockMethod($method)) {
                 $mock->__getMockBuilder()->__mockMethod($method)->andReturnSelf();
             }
 
+            # echo ' [mock]  ==> static call: ' . $method . ' <=== ' . PHP_EOL;
             return call_user_func_array([$mock, $method], $parameters);
         }
 
-        // echo ' ==> static call: ' . $method . ' <=== ' . PHP_EOL;
+        # echo ' ==> static call: ' . $method . ' <=== ' . PHP_EOL;
 
         if (is_callable('parent::' . $method)) {
             return call_user_func_array('parent::' . $method, $parameters);
@@ -100,24 +102,36 @@ class Mockable implements MockableInterface
             return call_user_func_array('parent::__callStatic', [$method, $parameters]);
         }
 
-        return null;
+        throw new BadMethodCallException('Static method ' . $method . ' not found in class ' . get_called_class());
     }
 
-    public function _mockBuilder_handleMethodCall($method, $parameters)
+    private function _mockBuilder_handleMethodCall($method, $parameters)
     {
-        if ($method === '__construct') {
-            $this->mock = static::getMock();
+        switch ($method) {
+            case '__construct':
+                $this->mock = static::_mockBuilder_getMock();
+                break;
+            case 'getMock':
+                return $this->mock;
+            case 'setMock':
+                if (!isset($parameters[0]) || !$parameters[0] instanceof \Mockery\MockInterface) {
+                    throw new BadMethodCallException('The first parameter must me instanceof MockInterface');
+                }
+                $this->mock = $parameters[0];
+                return $this->mock;
         }
 
         if ($this->mock) {
             if (!$this->mock->__getMockBuilder()->__getMockMethod($method)) {
                 $this->mock->__getMockBuilder()->__mockMethod($method)->andReturnSelf();
             }
-            // echo ' ==> method call: ' . $method . ' <=== ' . PHP_EOL;
+            # echo ' [mock] ==> method call: ' . get_class($this) . '->' . $method . ' <=== ' . PHP_EOL;
+            # echo '     -> CAll mock: ' . get_class($this->mock) . '->' . $method . PHP_EOL;
+
             return call_user_func_array([$this->mock, $method], $parameters);
         }
 
-        // echo get_class($this) . '  ==> method call: ' . $method . ' <=== ' . PHP_EOL;
+        # echo '  ==> method call: ' . get_class($this)  . '->'. $method . ' <=== ' . PHP_EOL;
 
         if (get_parent_class($this)) {
             $parentClass = get_parent_class($this);
@@ -131,6 +145,6 @@ class Mockable implements MockableInterface
             }
         }
 
-        return null;
+        throw new BadMethodCallException('Method ' . $method . ' not found in class ' . get_class($this));
     }
 }

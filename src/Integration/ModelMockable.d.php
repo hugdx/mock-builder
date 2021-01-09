@@ -3,7 +3,6 @@
 
 namespace HungDX\MockBuilder\Integration;
 
-
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -21,5 +20,4 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ModelMockable extends Model
 {
-
 }

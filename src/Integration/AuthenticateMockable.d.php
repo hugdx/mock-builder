@@ -18,5 +18,4 @@ namespace HungDX\MockBuilder\Integration;
  */
 class AuthenticateMockable extends \Illuminate\Foundation\Auth\User
 {
-
 }

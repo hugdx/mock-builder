@@ -14,7 +14,7 @@ if (class_exists($className)) {
 }
 
 // Not running with phpunit
-if (!defined('PHPUNIT_COMPOSER_INSTALL')) {
+if (!MockBuilder::isTestingMode()) {
     return require_once __DIR__ . '/ModelMockable.d.php';
 }
 
