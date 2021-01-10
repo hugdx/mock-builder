@@ -6,6 +6,7 @@ use HungDX\MockBuilder\Builder\Config;
 use HungDX\MockBuilder\Builder\Logger;
 use HungDX\MockBuilder\Builder\Method;
 use HungDX\MockBuilder\Contracts\MockBuilderInterface;
+use HungDX\MockBuilder\Generator\ClassGenerator;
 use HungDX\MockBuilder\Generator\MockableGenerator;
 use Mockery;
 use Mockery\Generator\MockConfigurationBuilder;
@@ -85,28 +86,8 @@ class MockBuilder implements MockBuilderInterface
             return;
         }
 
-        $builder = new MockConfigurationBuilder();
-        foreach ($targets as $index => $arg) {
-            if ($arg instanceof MockConfigurationBuilder) {
-                $builder = $arg;
-                unset($targets[$index]);
-            }
-        }
-
-        $builder->setName($className);
-        foreach ($targets as $arg) {
-            $builder->addTarget($arg);
-        }
-
-        $config = $builder->getMockConfiguration();
-        $def    = MockableGenerator::withDefaultPasses()->generate($config);
-
-        if (class_exists($def->getClassName(), false)) {
-            return;
-        }
-
+        $def = call_user_func_array('ClassGenerator::createClass', func_get_args());
         # file_put_contents(__DIR__ . '/dynamic_' . str_replace('\\', '_', $def->getClassName()) . '.php', $def->getCode());
-
         Mockery::getLoader()->load($def);
     }
 
