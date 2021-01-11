@@ -10,8 +10,6 @@ use Mockery\Exception\BadMethodCallException;
 /**
  * Class Mockable
  * @package HungDX\MockBuilder\Generator
- * @method MockBuilderInterface|\Mockery\MockInterface|null setMock(\Mockery\MockInterface $mock)
- * @method MockBuilderInterface|\Mockery\MockInterface|null getMock
  */
 class Mockable implements MockableInterface
 {

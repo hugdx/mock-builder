@@ -5,8 +5,9 @@ namespace HungDX\MockBuilder;
 use HungDX\MockBuilder\Builder\Config;
 use HungDX\MockBuilder\Builder\Logger;
 use HungDX\MockBuilder\Builder\Method;
+use HungDX\MockBuilder\Contracts\MockableInterface;
 use HungDX\MockBuilder\Contracts\MockBuilderInterface;
-use HungDX\MockBuilder\Generator\MockableGenerator;
+use HungDX\MockBuilder\Generator\ClassGenerator;
 use Mockery;
 use Mockery\Generator\MockConfigurationBuilder;
 use ReflectionClass;
@@ -79,35 +80,62 @@ class MockBuilder implements MockBuilderInterface
         return $mock;
     }
 
+    /**
+     * @param string $sourceClass
+     * @param string|null $sourceClassFilePath
+     * @param mixed ...$targets
+     * @throws \Exception
+     */
+    public static function overrideClass(string $sourceClass, string $sourceClassFilePath = null, ...$targets)
+    {
+        // Class already mocked
+        if (class_exists($sourceClass, false) && (new ReflectionClass($sourceClass))->implementsInterface(MockableInterface::class)) {
+            return;
+        }
+
+        // Get MockConfigBuilder
+        $classGenerator = new ClassGenerator();
+        foreach ($targets as $index => $target) {
+            if ($target instanceof MockConfigurationBuilder) {
+                $classGenerator->setConfig($target);
+                unset($targets[$index]);
+            }
+        }
+
+        // Set user config
+        $classGenerator->setName($sourceClass);
+        foreach ($targets as $index => $target) {
+            $classGenerator->getConfig()->addTarget($target);
+        }
+
+        $classGenerator->createOverride($sourceClassFilePath);
+    }
+
+    /**
+     * @param string $className
+     * @param mixed ...$targets
+     * @throws \Exception
+     */
     public static function createClass(string $className, ...$targets)
     {
         if (class_exists($className, false)) {
             return;
         }
 
-        $builder = new MockConfigurationBuilder();
-        foreach ($targets as $index => $arg) {
-            if ($arg instanceof MockConfigurationBuilder) {
-                $builder = $arg;
+        $classGenerator = new ClassGenerator();
+        foreach ($targets as $index => $target) {
+            if ($target instanceof MockConfigurationBuilder) {
+                $classGenerator->setConfig($target);
                 unset($targets[$index]);
             }
         }
 
-        $builder->setName($className);
-        foreach ($targets as $arg) {
-            $builder->addTarget($arg);
+        $classGenerator->setName($className);
+        foreach ($targets as $index => $target) {
+            $classGenerator->getConfig()->addTarget($target);
         }
 
-        $config = $builder->getMockConfiguration();
-        $def    = MockableGenerator::withDefaultPasses()->generate($config);
-
-        if (class_exists($def->getClassName(), false)) {
-            return;
-        }
-
-        # file_put_contents(__DIR__ . '/dynamic_' . str_replace('\\', '_', $def->getClassName()) . '.php', $def->getCode());
-
-        Mockery::getLoader()->load($def);
+        $classGenerator->create();
     }
 
     public static function createClassName(string $srcClassName): string
@@ -128,6 +156,8 @@ class MockBuilder implements MockBuilderInterface
     private static function initMock(Mockery\MockInterface $mock)
     {
         $builder = new static($mock);
+
+        $builder->getConfig()->ignoreLogOfMethodIfParametersAreEmpty('__construct');
 
         $mock->shouldReceive('__getMockBuilder')->andReturnUsing(function () use ($builder) {
             return $builder;
@@ -259,10 +289,5 @@ class MockBuilder implements MockBuilderInterface
             return end($this->mockMethods[$methodName]);
         }
         return null;
-    }
-
-    public static function isTestingMode(): bool
-    {
-        return defined('PHPUNIT_COMPOSER_INSTALL');
     }
 }

@@ -8,8 +8,9 @@ namespace HungDX\MockBuilder\Generator;
 use Mockery\Generator\MockConfiguration;
 use Mockery\Generator\MockDefinition;
 use Mockery\Generator\StringManipulation\Pass\ConstantsPass;
+use Mockery\Generator\StringManipulationGenerator;
 
-class MockableGenerator extends \Mockery\Generator\StringManipulationGenerator
+class MockableGenerator extends StringManipulationGenerator
 {
     public static function withDefaultPasses()
     {
