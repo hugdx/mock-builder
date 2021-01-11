@@ -87,9 +87,9 @@ class Method
                     /** @var Mockable $mockForCallback */
                     $mockForCallback = (new ReflectionClass($targetClassName))->newInstanceWithoutConstructor();
 
-                    echo ' #START: $mockForCallback->setMock($this->mock->getMock()) ' . PHP_EOL;
+                    // echo ' #START: $mockForCallback->setMock($this->mock->getMock()) ' . PHP_EOL;
                     $mockForCallback->setMock($this->mock->getMock());
-                    echo ' #DONE: $mockForCallback->setMock($this->mock->getMock()) ' . PHP_EOL;
+                    // echo ' #DONE: $mockForCallback->setMock($this->mock->getMock()) ' . PHP_EOL;
                 }
             }
         } catch (Exception $e) {

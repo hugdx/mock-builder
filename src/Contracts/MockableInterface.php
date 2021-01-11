@@ -6,8 +6,6 @@ namespace HungDX\MockBuilder\Contracts;
 /**
  * Interface MockableInterface
  * @package HungDX\MockBuilder\Contracts
- * @method MockBuilderInterface|\Mockery\MockInterface|null setMock(\Mockery\MockInterface $mock)
- * @method MockBuilderInterface|\Mockery\MockInterface|null getMock
  */
 interface MockableInterface
 {
