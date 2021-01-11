@@ -118,8 +118,23 @@ class ClassGenerator
     {
         // Get file path from composer autoload
         if (!$filePath) {
+            $filePaths = [
+                __DIR__ . '/../../vendor/autoload.php',
+                __DIR__ . '/../../../../autoload.php',
+                getcwd() . '/vendor/autoload.php',
+            ];
+
             /* @var $loader \Composer\Autoload\ClassLoader */
-            $loader   = require __DIR__ . '/../../vendor/autoload.php';
+            foreach ($filePaths as $filePath) {
+                if (file_exists($filePath)) {
+                    $loader = require $filePath;
+                }
+            }
+
+            if (!$loader) {
+                throw new RuntimeException("File vendor/autoload.php not found. Tried with: " . json_decode($filePaths));
+            }
+
             $filePath = $loader->findFile($className) ?: '';
             if (!$filePath) {
                 throw new RuntimeException("Cannot find file for class '$className'");

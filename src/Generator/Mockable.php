@@ -19,6 +19,9 @@ class Mockable implements MockableInterface
     /** @var null|MockBuilderInterface|\Mockery\MockInterface */
     private $mock = null;
 
+    /** @var null|callable */
+    public static $onCreateMock = null;
+
     /** @return MockBuilderInterface|\Mockery\MockInterface */
     public static function fake()
     {
@@ -32,6 +35,10 @@ class Mockable implements MockableInterface
                 foreach (self::MOCK_CLASS_METHODS as $classToMockMethods) {
                     self::$mocks[static::class]->__getMockBuilder()->mockClassMethods($classToMockMethods);
                 }
+            }
+
+            if (isset(static::$onCreateMock) && is_callable(static::$onCreateMock)) {
+                call_user_func(static::$onCreateMock, self::$mocks[static::class]);
             }
         }
         return self::$mocks[static::class];

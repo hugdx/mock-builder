@@ -26,9 +26,6 @@ class MockBuilder implements MockBuilderInterface
     /** @var Mockery\MockInterface|mixed */
     private $mock;
 
-    /** @var Method[]|array */
-    public $mockMethods = [];
-
     /**
      * MockQueryBuilder constructor.
      * @param Mockery\MockInterface $mock
@@ -220,7 +217,15 @@ class MockBuilder implements MockBuilderInterface
 
         $this->mock->shouldAllowMockingProtectedMethods();
         try {
-            $class = new ReflectionClass($className);
+            $class         = new ReflectionClass($className);
+            $ignoreMethods = [];
+            if ($class->implementsInterface(MockableInterface::class)) {
+                $ignoreMethods = [
+                    'fake',
+                    'restoreOriginal',
+                ];
+            }
+
             foreach ($class->getMethods() as $method) {
                 $methodName = $method->getName();
 
@@ -231,6 +236,11 @@ class MockBuilder implements MockBuilderInterface
 
                 // Ignore the private/final method
                 if ($method->isPrivate() || $method->isFinal()) {
+                    continue;
+                }
+
+                // In Ignore list
+                if (in_array($methodName, $ignoreMethods)) {
                     continue;
                 }
 
@@ -261,7 +271,7 @@ class MockBuilder implements MockBuilderInterface
     {
         $method = new Method($this, $methodName);
 
-        $this->methods[$methodName] = $method;
+        $this->methods[$methodName][] = $method;
         return $method;
     }
 
@@ -271,7 +281,7 @@ class MockBuilder implements MockBuilderInterface
      */
     public function __getMockMethod(string $methodName): array
     {
-        return $this->mockMethods[$methodName] ?? [];
+        return $this->methods[$methodName] ?? [];
     }
 
     public function __getMockBuilder(): MockBuilder
@@ -285,8 +295,8 @@ class MockBuilder implements MockBuilderInterface
      */
     public function __getLastMockOfMethod(string $methodName)
     {
-        if (!empty($this->mockMethods[$methodName])) {
-            return end($this->mockMethods[$methodName]);
+        if (!empty($this->methods[$methodName])) {
+            return end($this->methods[$methodName]);
         }
         return null;
     }
