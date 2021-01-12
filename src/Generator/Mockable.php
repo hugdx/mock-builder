@@ -27,12 +27,12 @@ class Mockable implements MockableInterface
     {
         if (!isset(self::$mocks[static::class])) {
             $parentClass                = get_parent_class(self::class);
-            self::$mocks[static::class] = MockBuilder::create($parentClass);
+            self::$mocks[static::class] = MockBuilder::create(static::class);
             self::$mocks[static::class]->__getMockBuilder()->mockClassMethods($parentClass);
 
             // Dynamic added by Generator
-            if (defined(self::class . '::MOCK_CLASS_METHODS')) {
-                foreach (self::MOCK_CLASS_METHODS as $classToMockMethods) {
+            if (defined(static::class . '::MOCK_CLASS_METHODS')) {
+                foreach (static::MOCK_CLASS_METHODS as $classToMockMethods) {
                     self::$mocks[static::class]->__getMockBuilder()->mockClassMethods($classToMockMethods);
                 }
             }
