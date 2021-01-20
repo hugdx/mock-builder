@@ -44,8 +44,12 @@ class Mockable implements MockableInterface
         return self::$mocks[static::class];
     }
 
-    public static function restoreOriginal()
+    public static function restoreOriginal($includeChildClass = false)
     {
+        if ($includeChildClass) {
+            self::$mocks = [];
+        }
+
         if (isset(self::$mocks[static::class])) {
             unset(self::$mocks[static::class]);
         }
